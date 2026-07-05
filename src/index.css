@@ -11,10 +11,10 @@
 }
 
 :root {
-  --bg:        #0C0C0D;
-  --bg-mid:    #111113;
-  --bg-light:  #171718;
-  --surface:   #1C1C1E;
+  --bg:        #0C0C0D;   /* premium dark charcoal */
+  --bg-mid:    #161618;
+  --bg-light:  #1C1C1F;
+  --surface:   #232326;
   --border:    rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.15);
 

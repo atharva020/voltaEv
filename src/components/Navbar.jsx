@@ -1,4 +1,4 @@
-import './styles/Navbar.css'
+import '../styles/Navbar.css'
 
 export default function Navbar({ visible }) {
   return (

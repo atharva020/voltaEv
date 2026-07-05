@@ -9,3 +9,20 @@
 .page-content footer {
   pointer-events: auto;
 }
+
+/* ── Drive-off transition section ── */
+.driveoff-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  pointer-events: none;
+}
+
+.driveoff-tagline {
+  text-align: center;
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  color: var(--text);
+  letter-spacing: 0.04em;
+}
