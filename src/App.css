@@ -1,0 +1,11 @@
+.page-content {
+  position: relative;
+  z-index: 2; /* above canvas (z=1), below nav (z=100) */
+  pointer-events: none; /* let mouse events pass through to canvas for future interaction */
+}
+
+/* Re-enable pointer events for interactive sections */
+.page-content section,
+.page-content footer {
+  pointer-events: auto;
+}

@@ -1,0 +1,123 @@
+.stats-section {
+  position: relative;
+  min-height: 100vh;
+  background: var(--bg-mid);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 120px 72px;
+}
+
+/* Subtle horizontal rule at top */
+.stats-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 72px;
+  right: 72px;
+  height: 1px;
+  background: var(--border);
+}
+
+.stats-section__label {
+  position: absolute;
+  top: 56px;
+  left: 72px;
+}
+
+.stats-section__headline {
+  margin-bottom: 72px;
+}
+
+.stats-section__headline h2 {
+  font-size: clamp(48px, 7vw, 96px);
+  color: #F2F0EC;
+  max-width: 500px;
+  line-height: 0.92;
+}
+
+.stats-section__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+}
+
+.stat-item {
+  padding: 40px 32px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.stat-item__value {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.stat-item__num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: clamp(52px, 6vw, 80px);
+  color: #F2F0EC;
+  line-height: 1;
+}
+
+.stat-item__unit {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.stat-item__label {
+  margin-bottom: 8px;
+  font-size: 10px;
+}
+
+.stat-item__desc {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+.stats-section__rule {
+  height: 1px;
+  background: var(--border);
+  margin-top: 80px;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+@media (max-width: 1024px) {
+  .stats-section__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-section {
+    padding: 80px 24px;
+  }
+  .stats-section::before {
+    left: 24px;
+    right: 24px;
+  }
+  .stats-section__label {
+    left: 24px;
+  }
+  .stats-section__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .stat-item {
+    padding: 24px 20px;
+  }
+}
