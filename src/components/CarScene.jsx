@@ -24,18 +24,56 @@ function LoadReporter({ onLoadProgress, onModelReady }) {
   return null
 }
 
-const WHEEL_ASSEMBLY_NAMES = new Set([
+const WHEEL_HUB_NAMES = [
   'Empty_FL_Wheels',
   'Empty_FR_Wheels',
   'Empty_FL_Wheels.001',
   'Empty_FR_Wheels.001',
+]
+
+const RIM_NAMES = [
   'rim_235',
   'rim_235.001',
   'rim_235.002',
   'rim_235.003',
-])
+]
 
-function collectWheelAssemblies(object, wheelParentsRef) {
+const WHEEL_ASSEMBLY_NAMES = new Set(WHEEL_HUB_NAMES)
+
+const _hubPos = new THREE.Vector3()
+const _rimPos = new THREE.Vector3()
+
+function attachRimsToWheelHubs(object) {
+  const hubs = []
+  const rims = []
+
+  object.traverse((child) => {
+    if (WHEEL_HUB_NAMES.includes(child.name)) hubs.push(child)
+    if (RIM_NAMES.includes(child.name)) rims.push(child)
+  })
+
+  if (!hubs.length || !rims.length) return
+
+  rims.forEach((rim) => {
+    rim.getWorldPosition(_rimPos)
+
+    let closestHub = hubs[0]
+    let minDist = Infinity
+
+    hubs.forEach((hub) => {
+      hub.getWorldPosition(_hubPos)
+      const dist = _rimPos.distanceToSquared(_hubPos)
+      if (dist < minDist) {
+        minDist = dist
+        closestHub = hub
+      }
+    })
+
+    closestHub.attach(rim)
+  })
+}
+
+export function collectWheelAssemblies(object, wheelParentsRef) {
   const assemblies = []
   object.traverse((child) => {
     if (WHEEL_ASSEMBLY_NAMES.has(child.name)) {
@@ -106,6 +144,7 @@ export function fixMaterials(object, bodyColor, wheelParentsRef) {
     })
   })
 
+  attachRimsToWheelHubs(object)
   collectWheelAssemblies(object, wheelParentsRef)
 }
 
