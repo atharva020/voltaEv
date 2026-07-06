@@ -30,9 +30,11 @@ export default function App() {
 
   // ── Shared mutable ref for 60fps car animation (read by useFrame in CarScene) ──
   const carData = useRef({
-    rotationY: Math.PI * 0.5,  // start at side profile (90°)
+    rotationY: 0,  // straight-on front view (0 = grille toward camera)
     positionX: 0,
+    positionY: 0,
     positionZ: 0,
+    scale: 1,
     wheelRot: 0,
   })
 
@@ -63,7 +65,7 @@ export default function App() {
   useEffect(() => {
     if (!loaded) return
     if (isMobile()) {
-      let angle = Math.PI * 0.5
+      let angle = 0
       autoRotRef.current = setInterval(() => {
         angle += 0.005
         carData.current.rotationY = angle
@@ -82,72 +84,82 @@ export default function App() {
     // This drives carData.current which is read by useFrame at 60fps
     // ────────────────────────────────────────────────────────────────
 
+    // Tunable constants ───────────────────────────────────────────
+    const FRONT = 0            // straight-on front rotationY (0 = grille toward camera)
+    const ZOOM_SCALE = 5.5     // modest zoom — enough to fill glass, NOT clip through model
+    const ZOOM_Y = -3.2        // pull car DOWN so windshield fills screen center
+    const ZOOM_Z = 1           // slight nudge toward camera
+
     const masterTL = gsap.timeline({
       scrollTrigger: {
         trigger: '#page-content',
         start: 'top top',
         end: 'bottom bottom',
         scrub: 1.2,  // smooth scrub
-        onUpdate: (self) => {
+        onUpdate: () => {
           // Update the rotation indicator UI reactively
           setDisplayAngle(carData.current.rotationY)
         }
       }
     })
 
-    // ── HERO → DESIGN (0% → 20% of scroll) ──
-    // Car starts at side profile (π/2 = 90°), rotates to 3/4 front (π/4 = 45°)
+    // ── PHASE A · HERO → DESIGN — zoom into windshield, then go black ──
+    // Car stays put and front-facing; scales up + descends so the dark glass
+    // fills frame. Black overlay reaches full BEFORE zoom completes, so we
+    // never visibly clip into the interior of the model.
     masterTL.to(carData.current, {
-      rotationY: Math.PI * 0.25,  // 3/4 front angle
-      positionX: -0.5,            // drift slightly left to make room for callouts
-      duration: 20,               // relative duration within timeline
-      ease: 'power1.inOut',
-    })
-
-    // ── DESIGN → STATS (20% → 40%) ──
-    // Car rotates to rear 3/4 angle (π * 1.25 = 225°) with slight scale-up feel via position
-    .to(carData.current, {
-      rotationY: Math.PI * 1.25,  // rear 3/4 angle
-      positionX: 0,               // re-center
-      duration: 20,
-      ease: 'power1.inOut',
-    })
-
-    // ── STATS → TECHNOLOGY (40% → 55%) ──
-    // Continue rotation, show another angle
-    .to(carData.current, {
-      rotationY: Math.PI * 1.75,  // approaching front again
-      duration: 15,
-      ease: 'power1.inOut',
-    })
-
-    // ── TECHNOLOGY → CONFIG (55% → 70%) ──
-    // Rotate back to clean 3/4 front for color configurator
-    .to(carData.current, {
-      rotationY: Math.PI * 2.25,  // clean 3/4 front (equivalent to 45° + full revolution)
-      positionX: 0,
-      duration: 15,
-      ease: 'power1.inOut',
-    })
-
-    // ── CONFIG → DRIVE-OFF (70% → 95%) ──
-    // Car turns to face driving direction, then drives out of viewport
-    .to(carData.current, {
-      rotationY: Math.PI * 2.5,   // turn to face right edge
-      positionX: 0,               // hold position while turning
-      duration: 5,
-      ease: 'power1.in',
-    })
-    .to(carData.current, {
-      positionX: 15,              // drive off screen to the right
-      positionZ: -3,              // slight depth for perspective
-      wheelRot: Math.PI * 30,     // massive wheel spin! (~15 revs)
-      duration: 20,
+      scale: ZOOM_SCALE,
+      positionY: ZOOM_Y,
+      positionZ: ZOOM_Z,
+      rotationY: FRONT,
+      duration: 12,
       ease: 'power2.in',
     })
+    // Black fades in over the final stretch and locks solid ~2 units before
+    // the zoom finishes → clean cut to black, model never penetrated on screen.
+    .to('#black-overlay', {
+      opacity: 1,
+      duration: 5,
+      ease: 'none',
+    }, '-=7')
 
-    // ── FOOTER (95% → 100%) ──
-    // Car is fully gone, nothing to animate
+    // ── PHASE B · DESIGN → STATS → TECH → CONFIG — hold solid black ──
+    // Only the product-info side texts scroll. Car is parked & fully hidden.
+    .to(carData.current, {
+      scale: ZOOM_SCALE, // no-op hold to keep car offscreen behind the black
+      duration: 55,
+    })
+
+    // ── PHASE C · FOOTER — car zooms back out from the front ──
+    // Fade the black away WHILE shrinking the car from big → hero size, so we
+    // literally watch it zoom out, still front-facing.
+    .to(carData.current, {
+      scale: 1,
+      positionY: 0,
+      positionZ: 0,
+      rotationY: FRONT,
+      duration: 14,
+      ease: 'power2.out',
+    })
+    .to('#black-overlay', {
+      opacity: 0,
+      duration: 9,
+      ease: 'none',
+    }, '<') // reveal happens together with the zoom-out
+
+    // ── PHASE D · once fully zoomed out — spin RIGHT & drive off screen ──
+    .to(carData.current, {
+      rotationY: FRONT + Math.PI * 0.5, // turn rightward
+      duration: 6,
+      ease: 'power1.inOut',
+    })
+    .to(carData.current, {
+      positionX: 22,            // exit the frame to the RIGHT
+      positionZ: -2,
+      wheelRot: Math.PI * 30,   // roll the wheels as it drives away
+      duration: 18,
+      ease: 'power2.in',
+    }, '-=2')
 
     // ────────────────────────────────────────────────────────────────
     // CONTENT ANIMATIONS — separate ScrollTriggers for DOM elements
@@ -375,6 +387,19 @@ export default function App() {
 
       {/* Fixed 3D canvas — always behind HTML content */}
       <CarScene carData={carData} bodyColor={bodyColor} />
+
+      {/* Black screen overlay for zoom transition */}
+      <div 
+        id="black-overlay" 
+        style={{ 
+          position: 'fixed', 
+          inset: 0, 
+          background: 'var(--bg)', 
+          opacity: 0, 
+          zIndex: 1, 
+          pointerEvents: 'none' 
+        }} 
+      />
 
       {/* Fixed UI overlays */}
       {loaded && (

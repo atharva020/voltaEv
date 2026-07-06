@@ -102,11 +102,13 @@ function CarModel({ carData, bodyColor }) {
     const maxDim = Math.max(size.x, size.y, size.z)
     
     if (maxDim > 0) {
-      const scaleTarget = 5 / maxDim // target max dimension of 5 world units
+      const scaleTarget = 8 / maxDim // increased from 5 to make car larger initially
       clone.scale.setScalar(scaleTarget)
     }
 
     fixMaterials(clone, bodyColor, wheelsRef)
+    console.log('[CarScene] wheels detected:', wheelsRef.current.length,
+      wheelsRef.current.map(w => w.name))
     return clone
   }, [scene]) // scene is cached by useGLTF, bodyColor is handled below
 
@@ -130,11 +132,13 @@ function CarModel({ carData, bodyColor }) {
   // useFrame for 60fps buttery smooth scroll-driven animation
   useFrame(() => {
     if (!carData?.current || !groupRef.current) return
-    const { rotationY, positionX, positionZ, wheelRot } = carData.current
+    const { rotationY, positionX, positionY, positionZ, scale, wheelRot } = carData.current
     
     groupRef.current.rotation.y = rotationY
     groupRef.current.position.x = positionX
+    groupRef.current.position.y = positionY || 0
     groupRef.current.position.z = positionZ
+    groupRef.current.scale.setScalar(scale || 1)
 
     wheelsRef.current.forEach(wheel => {
       // Assuming X is the rolling axis for wheels
