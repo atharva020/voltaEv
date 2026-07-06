@@ -40,37 +40,15 @@ const RIM_NAMES = [
 
 const WHEEL_ASSEMBLY_NAMES = new Set(WHEEL_HUB_NAMES)
 
-const _hubPos = new THREE.Vector3()
-const _rimPos = new THREE.Vector3()
-
-function attachRimsToWheelHubs(object) {
-  const hubs = []
+export function collectRims(object, rimsRef) {
   const rims = []
-
   object.traverse((child) => {
-    if (WHEEL_HUB_NAMES.includes(child.name)) hubs.push(child)
     if (RIM_NAMES.includes(child.name)) rims.push(child)
   })
-
-  if (!hubs.length || !rims.length) return
-
-  rims.forEach((rim) => {
-    rim.getWorldPosition(_rimPos)
-
-    let closestHub = hubs[0]
-    let minDist = Infinity
-
-    hubs.forEach((hub) => {
-      hub.getWorldPosition(_hubPos)
-      const dist = _rimPos.distanceToSquared(_hubPos)
-      if (dist < minDist) {
-        minDist = dist
-        closestHub = hub
-      }
-    })
-
-    closestHub.attach(rim)
-  })
+  if (rimsRef) {
+    rimsRef.current = rims
+  }
+  return rims
 }
 
 export function collectWheelAssemblies(object, wheelParentsRef) {
@@ -86,7 +64,7 @@ export function collectWheelAssemblies(object, wheelParentsRef) {
 }
 
 // ── Material enhancer: log and fix metalness/roughness ───────
-export function fixMaterials(object, bodyColor, wheelParentsRef) {
+export function fixMaterials(object, bodyColor, wheelParentsRef, rimsRef) {
   object.traverse((child) => {
     if (!child.isMesh) return
 
@@ -144,8 +122,17 @@ export function fixMaterials(object, bodyColor, wheelParentsRef) {
     })
   })
 
-  attachRimsToWheelHubs(object)
   collectWheelAssemblies(object, wheelParentsRef)
+  collectRims(object, rimsRef)
+}
+
+const _rollAxis = new THREE.Vector3(1, 0, 0)
+
+export function spinRims(rims, amount, orientationQuat) {
+  if (!amount || !rims?.length) return
+  _rollAxis.set(1, 0, 0)
+  if (orientationQuat) _rollAxis.applyQuaternion(orientationQuat)
+  rims.forEach((rim) => rim.rotateOnWorldAxis(_rollAxis, amount))
 }
 
 export function applyBodyColor(object, bodyColor) {
@@ -166,11 +153,14 @@ export function applyBodyColor(object, bodyColor) {
 function CarModel({ carData, bodyColor }) {
   const groupRef = useRef()
   const wheelsRef = useRef([])
+  const rimsRef = useRef([])
+  const prevWheelRot = useRef(0)
   const { scene } = useGLTF(MODEL_PATH)
   
   const clonedScene = useMemo(() => {
     const clone = scene.clone(true)
     wheelsRef.current = []
+    rimsRef.current = []
     
     const box = new THREE.Box3().setFromObject(clone)
     const size = box.getSize(new THREE.Vector3())
@@ -180,7 +170,7 @@ function CarModel({ carData, bodyColor }) {
       clone.scale.setScalar(8 / maxDim)
     }
 
-    fixMaterials(clone, bodyColor, wheelsRef)
+    fixMaterials(clone, bodyColor, wheelsRef, rimsRef)
     return clone
   }, [scene])
 
@@ -202,6 +192,10 @@ function CarModel({ carData, bodyColor }) {
     wheelsRef.current.forEach((wheelAssembly) => {
       wheelAssembly.rotation.x = wheelRot
     })
+
+    const wheelDelta = wheelRot - prevWheelRot.current
+    spinRims(rimsRef.current, wheelDelta, groupRef.current.quaternion)
+    prevWheelRot.current = wheelRot
   })
 
   return (
