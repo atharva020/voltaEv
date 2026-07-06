@@ -9,7 +9,6 @@ import Preloader from './components/Preloader'
 import Navbar from './components/Navbar'
 import CarScene from './components/CarScene'
 import RotationIndicator from './components/RotationIndicator'
-import ModelVariants from './components/ModelVariants'
 import HeroSection from './components/HeroSection'
 import DesignSection from './components/DesignSection'
 import StatsSection from './components/StatsSection'
@@ -24,7 +23,7 @@ const isMobile = () => window.innerWidth < 768
 export default function App() {
   const [loadProgress, setLoadProgress] = useState(0)
   const [loaded, setLoaded] = useState(false)
-  const [bodyColor, setBodyColor] = useState('#FFFFFF')
+  const [bodyColor, setBodyColor] = useState('#1A1A1A')
   const [navVisible, setNavVisible] = useState(false)
   const [displayAngle, setDisplayAngle] = useState(0) // for the RotationIndicator UI
 
@@ -366,15 +365,27 @@ export default function App() {
       ease: 'sine.out',
     })
 
-    gsap.from('#config-right', {
+    gsap.from('#config-preview', {
       scrollTrigger: {
         trigger: '#section-config',
-        start: 'top 80%',
-        end: 'top 40%',
+        start: 'top 75%',
+        end: 'top 35%',
         scrub: 0.8,
       },
       opacity: 0,
-      x: 40,
+      scale: 0.96,
+      ease: 'sine.out',
+    })
+
+    gsap.from('#config-right', {
+      scrollTrigger: {
+        trigger: '#section-config',
+        start: 'top 70%',
+        end: 'top 30%',
+        scrub: 0.8,
+      },
+      opacity: 0,
+      y: 24,
       ease: 'sine.out',
     })
 
@@ -441,7 +452,6 @@ export default function App() {
       {loaded && (
         <>
           <Navbar visible={navVisible} />
-          <ModelVariants activeIndex={1} />
           <RotationIndicator angle={displayAngle} />
         </>
       )}
@@ -452,7 +462,7 @@ export default function App() {
         <DesignSection />
         <StatsSection />
         <TechnologySection />
-        <ConfigSection onColorChange={setBodyColor} />
+        <ConfigSection bodyColor={bodyColor} onColorChange={setBodyColor} />
 
         {/* Drive-off transition section */}
         <section className="driveoff-section" id="section-driveoff">

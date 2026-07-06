@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import ConfigCarPreview from './ConfigCarPreview'
 import '../styles/ConfigSection.css'
 
 const COLORS = [
@@ -9,8 +10,9 @@ const COLORS = [
   { id: 'color-terra',      label: 'Terra Bronze',     hex: '#7A4E2D',   material: '#8A5832' },
 ]
 
-export default function ConfigSection({ onColorChange }) {
+export default function ConfigSection({ bodyColor, onColorChange }) {
   const [activeColor, setActiveColor] = useState('color-midnight')
+  const activeLabel = COLORS.find((c) => c.id === activeColor)?.label
 
   const handleColorSelect = (c) => {
     setActiveColor(c.id)
@@ -24,16 +26,24 @@ export default function ConfigSection({ onColorChange }) {
       </div>
 
       <div className="config-section__content">
-        <div className="config-section__left" id="config-left">
-          <h2 className="display-lg" id="config-h2">
-            Make it<br />Yours.
-          </h2>
-          <p id="config-subtext">
-            Every VOLTA S is built to specification. Choose your exterior, trim, and delivery window.
-            No dealer markups. Direct to your door.
-          </p>
-          <div className="config-section__color-block">
-            <p className="label" style={{ marginBottom: '16px' }}>Exterior Finish</p>
+        <div className="config-section__controls" id="config-left">
+          <div className="config-section__intro">
+            <h2 className="display-lg" id="config-h2">
+              Make it<br />Yours.
+            </h2>
+            <p id="config-subtext">
+              Every VOLTA S is built to specification. Choose your exterior, trim, and delivery window.
+              No dealer markups. Direct to your door.
+            </p>
+          </div>
+
+          <div className="config-section__finish">
+            <div className="config-section__finish-header">
+              <span className="label">Exterior Finish</span>
+              <span className="config-section__color-name label" id="config-color-name">
+                {activeLabel}
+              </span>
+            </div>
             <div className="config-section__swatches" id="color-swatches">
               {COLORS.map((c) => (
                 <button
@@ -47,9 +57,6 @@ export default function ConfigSection({ onColorChange }) {
                 />
               ))}
             </div>
-            <p className="config-section__color-name label" id="config-color-name">
-              {COLORS.find(c => c.id === activeColor)?.label}
-            </p>
           </div>
 
           <button className="config-section__build-btn" id="config-build-btn">
@@ -57,8 +64,12 @@ export default function ConfigSection({ onColorChange }) {
           </button>
         </div>
 
-        <div className="config-section__right" id="config-right">
-          <div className="config-section__pricing">
+        <div className="config-section__stage" id="config-stage">
+          <div className="config-section__preview-wrap" id="config-preview">
+            <ConfigCarPreview bodyColor={bodyColor} />
+          </div>
+
+          <div className="config-section__pricing" id="config-right">
             <div className="config-pricing-item">
               <span className="label">Base</span>
               <span className="config-pricing-item__val">$78,900</span>
@@ -71,7 +82,7 @@ export default function ConfigSection({ onColorChange }) {
               <span className="label">22" Turbine Wheels</span>
               <span className="config-pricing-item__val">+$4,500</span>
             </div>
-            <div className="config-pricing-divider"></div>
+            <div className="config-pricing-divider" />
             <div className="config-pricing-item config-pricing-item--total">
               <span className="label">Est. Total</span>
               <span className="config-pricing-item__val">$91,400</span>

@@ -8,6 +8,7 @@ const FEATURES = [
     id: 'feat-headlights',
     img: '/design/headlights.jpg',
     imageSide: 'left',
+    objectPosition: '18% center',
     index: '01',
     label: 'Adaptive Matrix LED',
     title: 'Headlights that read the road',
@@ -17,6 +18,7 @@ const FEATURES = [
     id: 'feat-body',
     img: '/design/body.jpg',
     imageSide: 'right',
+    objectPosition: '22% center',
     index: '02',
     label: 'Cold-Pressed Steel',
     title: 'One piece. Zero gaps.',
@@ -26,6 +28,7 @@ const FEATURES = [
     id: 'feat-wheels',
     img: '/design/wheels.jpg',
     imageSide: 'left',
+    objectPosition: '15% center',
     index: '03',
     label: '22" Aero-Turbine',
     title: 'Wheels that cut the air',
@@ -52,6 +55,7 @@ export default function DesignSection() {
                 src={f.img}
                 alt={f.title}
                 className="feature-row__img"
+                style={{ objectPosition: f.objectPosition }}
                 loading="lazy"
                 onError={(e) => { e.currentTarget.style.opacity = 0 }}
               />

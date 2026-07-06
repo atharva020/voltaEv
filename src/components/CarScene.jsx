@@ -14,7 +14,7 @@ function LoadProgress() {
 }
 
 // ── Material enhancer: log and fix metalness/roughness ───────
-function fixMaterials(object, bodyColor, wheelParentsRef) {
+export function fixMaterials(object, bodyColor, wheelParentsRef) {
   const wheelMeshes = []
   
   object.traverse((child) => {
@@ -95,6 +95,21 @@ function fixMaterials(object, bodyColor, wheelParentsRef) {
   }
 }
 
+export function applyBodyColor(object, bodyColor) {
+  object.traverse((child) => {
+    if (!child.isMesh || !child.material) return
+    const mats = Array.isArray(child.material) ? child.material : [child.material]
+    mats.forEach((mat) => {
+      const matName = (mat.name || child.name || '').toLowerCase()
+      const isBodyPaint = matName.includes('body_color') || matName.includes('paint')
+      if (isBodyPaint && mat.color) {
+        mat.color.set(bodyColor)
+        mat.needsUpdate = true
+      }
+    })
+  })
+}
+
 // ── Car Model ─────────────────────────────────────────────────
 function CarModel({ carData, bodyColor }) {
   const groupRef = useRef()
@@ -124,18 +139,7 @@ function CarModel({ carData, bodyColor }) {
   // Reapply color when it changes
   useEffect(() => {
     if (!clonedScene) return
-    clonedScene.traverse((child) => {
-      if (!child.isMesh || !child.material) return
-      const mats = Array.isArray(child.material) ? child.material : [child.material]
-      mats.forEach((mat) => {
-        const matName = (mat.name || child.name || '').toLowerCase()
-        const isBodyPaint = matName.includes('body_color') || matName.includes('paint')
-        if (isBodyPaint && mat.color) {
-          mat.color.set(bodyColor)
-          mat.needsUpdate = true
-        }
-      })
-    })
+    applyBodyColor(clonedScene, bodyColor)
   }, [bodyColor, clonedScene])
 
   // useFrame for 60fps buttery smooth scroll-driven animation
