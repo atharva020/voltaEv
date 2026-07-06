@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import './index.css'
@@ -25,7 +25,8 @@ export default function App() {
   const [loaded, setLoaded] = useState(false)
   const [bodyColor, setBodyColor] = useState('#1A1A1A')
   const [navVisible, setNavVisible] = useState(false)
-  const [displayAngle, setDisplayAngle] = useState(0) // for the RotationIndicator UI
+  const animationsReady = useRef(false)
+  const modelReadyRef = useRef(false)
 
   // ── Shared mutable ref for 60fps car animation (read by useFrame in CarScene) ──
   const carData = useRef({
@@ -41,25 +42,22 @@ export default function App() {
   const idleSpinRef = useRef(null)   // desktop idle rotation loop
   const scrolledRef = useRef(false)  // true once user starts scrolling
 
-  // ── Simulate loading (actual model is loaded by R3F useGLTF) ──
-  useEffect(() => {
-    let prog = 0
-    const interval = setInterval(() => {
-      prog += Math.random() * 12 + 3
-      if (prog >= 100) {
-        prog = 100
-        setLoadProgress(100)
-        clearInterval(interval)
-        setTimeout(() => {
-          setLoaded(true)
-          setNavVisible(true)
-          initAnimations()
-        }, 600)
-      } else {
-        setLoadProgress(prog)
+  const handleLoadProgress = useCallback((progress) => {
+    setLoadProgress(progress)
+  }, [])
+
+  const handleModelReady = useCallback(() => {
+    if (modelReadyRef.current) return
+    modelReadyRef.current = true
+    setLoadProgress(100)
+    setTimeout(() => {
+      setLoaded(true)
+      setNavVisible(true)
+      if (!animationsReady.current) {
+        animationsReady.current = true
+        initAnimations()
       }
-    }, 80)
-    return () => clearInterval(interval)
+    }, 300)
   }, [])
 
   // ── Mobile: auto-rotate ──
@@ -70,7 +68,6 @@ export default function App() {
       autoRotRef.current = setInterval(() => {
         angle += 0.005
         carData.current.rotationY = angle
-        setDisplayAngle(angle)
       }, 16)
     }
     return () => clearInterval(autoRotRef.current)
@@ -84,7 +81,6 @@ export default function App() {
       if (scrolledRef.current) return   // stop feeding rotation once scrolling
       angle += 0.008
       carData.current.rotationY = angle
-      setDisplayAngle(angle)
     }, 16)
     return () => clearInterval(idleSpinRef.current)
   }, [loaded])
@@ -127,8 +123,6 @@ export default function App() {
               onComplete: () => { carData.current.rotationY = FRONT },
             })
           }
-          // Update the rotation indicator UI reactively
-          setDisplayAngle(carData.current.rotationY)
         }
       }
     })
@@ -433,7 +427,12 @@ export default function App() {
       <Preloader progress={loadProgress} done={loaded} />
 
       {/* Fixed 3D canvas — always behind HTML content */}
-      <CarScene carData={carData} bodyColor={bodyColor} />
+      <CarScene
+        carData={carData}
+        bodyColor={bodyColor}
+        onLoadProgress={handleLoadProgress}
+        onModelReady={handleModelReady}
+      />
 
       {/* Black screen overlay for zoom transition */}
       <div 
@@ -452,7 +451,7 @@ export default function App() {
       {loaded && (
         <>
           <Navbar visible={navVisible} />
-          <RotationIndicator angle={displayAngle} />
+          <RotationIndicator angleRef={carData} />
         </>
       )}
 

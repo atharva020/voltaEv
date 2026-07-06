@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import ConfigCarPreview from './ConfigCarPreview'
 import '../styles/ConfigSection.css'
 
@@ -12,7 +12,27 @@ const COLORS = [
 
 export default function ConfigSection({ bodyColor, onColorChange }) {
   const [activeColor, setActiveColor] = useState('color-midnight')
+  const [showPreview, setShowPreview] = useState(false)
+  const previewRef = useRef(null)
   const activeLabel = COLORS.find((c) => c.id === activeColor)?.label
+
+  useEffect(() => {
+    const el = previewRef.current
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShowPreview(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: '300px' }
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   const handleColorSelect = (c) => {
     setActiveColor(c.id)
@@ -65,8 +85,12 @@ export default function ConfigSection({ bodyColor, onColorChange }) {
         </div>
 
         <div className="config-section__stage" id="config-stage">
-          <div className="config-section__preview-wrap" id="config-preview">
-            <ConfigCarPreview bodyColor={bodyColor} />
+          <div className="config-section__preview-wrap" id="config-preview" ref={previewRef}>
+            {showPreview ? (
+              <ConfigCarPreview bodyColor={bodyColor} />
+            ) : (
+              <div className="config-section__preview-placeholder" aria-hidden="true" />
+            )}
           </div>
 
           <div className="config-section__pricing" id="config-right">

@@ -1,10 +1,26 @@
+import { useEffect, useRef } from 'react'
 import '../styles/RotationIndicator.css'
 
-export default function RotationIndicator({ angle }) {
-  // angle in radians, convert to 0-360 degrees
-  const deg = Math.round(((angle % (Math.PI * 2)) / (Math.PI * 2)) * 360 + 360) % 360
-  // Dot position along the line: 0deg = top, 360deg = bottom
-  const pct = deg / 360 // 0 to 1
+export default function RotationIndicator({ angleRef }) {
+  const dotRef = useRef(null)
+  const degRef = useRef(null)
+
+  useEffect(() => {
+    let frameId
+    const update = () => {
+      const angle = angleRef?.current?.rotationY ?? 0
+      const deg = Math.round(((angle % (Math.PI * 2)) / (Math.PI * 2)) * 360 + 360) % 360
+      const pct = deg / 360
+
+      if (dotRef.current) dotRef.current.style.top = `${pct * 100}%`
+      if (degRef.current) degRef.current.textContent = `${deg}°`
+
+      frameId = requestAnimationFrame(update)
+    }
+
+    frameId = requestAnimationFrame(update)
+    return () => cancelAnimationFrame(frameId)
+  }, [angleRef])
 
   return (
     <div className="rotation-indicator" id="rotation-indicator">
@@ -13,11 +29,11 @@ export default function RotationIndicator({ angle }) {
         <div
           className="rotation-indicator__dot"
           id="rot-dot"
-          style={{ top: `${pct * 100}%` }}
+          ref={dotRef}
         />
       </div>
       <span className="rotation-indicator__label label">360°</span>
-      <div className="rotation-indicator__deg label" id="rot-deg">{deg}°</div>
+      <div className="rotation-indicator__deg label" id="rot-deg" ref={degRef}>0°</div>
     </div>
   )
 }
