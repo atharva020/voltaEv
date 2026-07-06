@@ -6,7 +6,7 @@ import '../styles/DesignSection.css'
 const FEATURES = [
   {
     id: 'feat-headlights',
-    img: '/design/headlights.jpg',
+    img: '/design/headlights.png',
     imageSide: 'left',
     objectPosition: '18% center',
     index: '01',
@@ -16,7 +16,7 @@ const FEATURES = [
   },
   {
     id: 'feat-body',
-    img: '/design/body.jpg',
+    img: '/design/body.png',
     imageSide: 'right',
     objectPosition: '22% center',
     index: '02',
@@ -26,7 +26,7 @@ const FEATURES = [
   },
   {
     id: 'feat-wheels',
-    img: '/design/wheels.jpg',
+    img: '/design/wheels.png',
     imageSide: 'left',
     objectPosition: '15% center',
     index: '03',
@@ -57,7 +57,14 @@ export default function DesignSection() {
                 className="feature-row__img"
                 style={{ objectPosition: f.objectPosition }}
                 loading="lazy"
-                onError={(e) => { e.currentTarget.style.opacity = 0 }}
+                onLoad={(e) => {
+                  e.currentTarget.classList.add('feature-row__img--loaded')
+                  const placeholder = e.currentTarget.nextElementSibling
+                  if (placeholder) placeholder.style.display = 'none'
+                }}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'
+                }}
               />
               <span className="feature-row__placeholder">{f.label}</span>
             </div>
