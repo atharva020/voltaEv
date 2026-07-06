@@ -39,6 +39,8 @@ export default function App() {
   })
 
   const autoRotRef = useRef(null)
+  const idleSpinRef = useRef(null)   // desktop idle rotation loop
+  const scrolledRef = useRef(false)  // true once user starts scrolling
 
   // ── Simulate loading (actual model is loaded by R3F useGLTF) ──
   useEffect(() => {
@@ -75,6 +77,19 @@ export default function App() {
     return () => clearInterval(autoRotRef.current)
   }, [loaded])
 
+  // ── Desktop: idle spin at rest until the user scrolls ──
+  useEffect(() => {
+    if (!loaded || isMobile()) return
+    let angle = 0
+    idleSpinRef.current = setInterval(() => {
+      if (scrolledRef.current) return   // stop feeding rotation once scrolling
+      angle += 0.008
+      carData.current.rotationY = angle
+      setDisplayAngle(angle)
+    }, 16)
+    return () => clearInterval(idleSpinRef.current)
+  }, [loaded])
+
   // ── Master GSAP ScrollTrigger Timeline ──
   function initAnimations() {
     if (isMobile()) return
@@ -89,14 +104,31 @@ export default function App() {
     const ZOOM_SCALE = 5.5     // modest zoom — enough to fill glass, NOT clip through model
     const ZOOM_Y = -3.2        // pull car DOWN so windshield fills screen center
     const ZOOM_Z = 1           // slight nudge toward camera
-
+    const BLACK_HOLD = 95      // how long black stays solid over the product-info
+                               // sections. Raise if car reappears before config ends;
+                               // lower if black lingers into the footer.
     const masterTL = gsap.timeline({
       scrollTrigger: {
         trigger: '#page-content',
         start: 'top top',
         end: 'bottom bottom',
-        scrub: 1.2,  // smooth scrub
-        onUpdate: () => {
+        scrub: 0.5,  // much tighter scrub (was 1.2) for faster response
+        onUpdate: (self) => {
+          // First scroll → stop idle spin and settle to the nearest front pose,
+          // then the scrubbed zoom timeline carries on from there.
+          if (!scrolledRef.current && self.progress > 0.0005) {
+            scrolledRef.current = true
+            clearInterval(idleSpinRef.current)
+            const rot = carData.current.rotationY
+            const nearestFront = Math.round(rot / (Math.PI * 2)) * (Math.PI * 2)
+            gsap.to(carData.current, {
+              rotationY: nearestFront,
+              duration: 0.6,
+              ease: 'power2.out',
+              overwrite: 'auto', // only kill conflicting rotationY, NOT scale/pos
+              onComplete: () => { carData.current.rotationY = FRONT },
+            })
+          }
           // Update the rotation indicator UI reactively
           setDisplayAngle(carData.current.rotationY)
         }
@@ -111,7 +143,8 @@ export default function App() {
       scale: ZOOM_SCALE,
       positionY: ZOOM_Y,
       positionZ: ZOOM_Z,
-      rotationY: FRONT,
+      // rotationY intentionally omitted — the idle-spin handoff (below) settles
+      // the car to FRONT on first scroll; scrub must not fight it here.
       duration: 12,
       ease: 'power2.in',
     })
@@ -127,7 +160,7 @@ export default function App() {
     // Only the product-info side texts scroll. Car is parked & fully hidden.
     .to(carData.current, {
       scale: ZOOM_SCALE, // no-op hold to keep car offscreen behind the black
-      duration: 55,
+      duration: BLACK_HOLD,
     })
 
     // ── PHASE C · FOOTER — car zooms back out from the front ──
@@ -205,23 +238,27 @@ export default function App() {
       y: 10,
     })
 
-    // ── DESIGN SECTION: callouts fade in staggered ──
-    const callouts = ['#callout-headlights', '#callout-body', '#callout-wheels']
-    callouts.forEach((id, i) => {
-      gsap.fromTo(id,
-        { opacity: 0, x: -30 },
-        {
-          scrollTrigger: {
-            trigger: '#section-design',
-            start: `${i * 12}% center`,
-            end: `${i * 12 + 20}% center`,
-            scrub: 1,
-          },
-          opacity: 1,
-          x: 0,
-          duration: 1,
-          ease: 'sine.out',
-        }
+    // ── DESIGN SECTION: feature rows slide in — image from its side, text opposite ──
+    document.querySelectorAll('.feature-row').forEach((row) => {
+      const media = row.querySelector('.feature-row__media')
+      const info = row.querySelector('.feature-row__info')
+      const imgFromLeft = row.classList.contains('feature-row--img-left')
+      // Play once when the row actually reaches the viewport (not scrubbed from
+      // far away) so nothing reveals before you scroll to that section.
+      const st = {
+        trigger: row,
+        start: 'top 55%',
+        toggleActions: 'play none none reverse',
+      }
+      // Image enters from the screen edge it lives on
+      gsap.fromTo(media,
+        { opacity: 0, x: imgFromLeft ? -160 : 160 },
+        { scrollTrigger: st, opacity: 1, x: 0, duration: 1, ease: 'power3.out' }
+      )
+      // Text enters from the opposite edge
+      gsap.fromTo(info,
+        { opacity: 0, x: imgFromLeft ? 160 : -160 },
+        { scrollTrigger: st, opacity: 1, x: 0, duration: 1, ease: 'power3.out' }
       )
     })
 

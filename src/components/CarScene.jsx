@@ -14,16 +14,16 @@ function LoadProgress() {
 }
 
 // ── Material enhancer: log and fix metalness/roughness ───────
-function fixMaterials(object, bodyColor, wheelsRef) {
+function fixMaterials(object, bodyColor, wheelParentsRef) {
+  const wheelMeshes = []
+  
   object.traverse((child) => {
     if (!child.isMesh) return
     
-    // Collect wheels for spinning
+    // Collect wheel meshes by name
     const name = (child.name || '').toLowerCase()
-    if (name.includes('wheel') || name.includes('tire') || name.includes('tyre') || name.includes('rim')) {
-      if (wheelsRef && !wheelsRef.current.includes(child)) {
-        wheelsRef.current.push(child)
-      }
+    if (name.includes('wheel') || name.includes('tire') || name.includes('tyre') || name.includes('rim') || name.includes('rubber') || name.includes('tireprotector') || name.includes('plane00')) {
+      wheelMeshes.push(child)
     }
 
     if (!child.material) return
@@ -84,6 +84,15 @@ function fixMaterials(object, bodyColor, wheelsRef) {
       mat.needsUpdate = true
     })
   })
+  
+  // Group wheel meshes by parent to find the 4 wheel assemblies
+  const parentSet = new Set()
+  wheelMeshes.forEach(mesh => {
+    if (mesh.parent) parentSet.add(mesh.parent)
+  })
+  if (wheelParentsRef) {
+    wheelParentsRef.current = Array.from(parentSet)
+  }
 }
 
 // ── Car Model ─────────────────────────────────────────────────
@@ -107,8 +116,8 @@ function CarModel({ carData, bodyColor }) {
     }
 
     fixMaterials(clone, bodyColor, wheelsRef)
-    console.log('[CarScene] wheels detected:', wheelsRef.current.length,
-      wheelsRef.current.map(w => w.name))
+    console.log('[CarScene] wheel assemblies:', wheelsRef.current.length,
+      wheelsRef.current.map(p => p.name || '(unnamed)'))
     return clone
   }, [scene]) // scene is cached by useGLTF, bodyColor is handled below
 
@@ -140,9 +149,9 @@ function CarModel({ carData, bodyColor }) {
     groupRef.current.position.z = positionZ
     groupRef.current.scale.setScalar(scale || 1)
 
-    wheelsRef.current.forEach(wheel => {
-      // Assuming X is the rolling axis for wheels
-      wheel.rotation.x = wheelRot
+    // Rotate each wheel assembly (parent group) around its local X axis
+    wheelsRef.current.forEach(wheelParent => {
+      wheelParent.rotation.z = wheelRot
     })
   })
 

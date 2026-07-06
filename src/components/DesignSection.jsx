@@ -1,26 +1,35 @@
 import '../styles/DesignSection.css'
 
-const CALLOUTS = [
+// imageSide = which side the IMAGE sits on; the text goes opposite.
+// Drop your images at these paths (public/) later — a labelled placeholder
+// shows until the file exists.
+const FEATURES = [
   {
-    id: 'callout-headlights',
-    side: 'left',
+    id: 'feat-headlights',
+    img: '/design/headlights.jpg',
+    imageSide: 'left',
+    index: '01',
     label: 'Adaptive Matrix LED',
-    text: 'Each headlight contains 84 individually addressable LEDs. The system reads road geometry 200 meters ahead.',
-    top: '28%',
+    title: 'Headlights that read the road',
+    text: 'Each headlight packs 84 individually addressable LEDs. The system scans road geometry 200 meters ahead and reshapes the beam in real time.',
   },
   {
-    id: 'callout-wheels',
-    side: 'right',
-    label: '22" Aero-Turbine',
-    text: 'Forged aluminum with active aerodynamic channels reduce drag by 12% at highway speeds.',
-    top: '62%',
-  },
-  {
-    id: 'callout-body',
-    side: 'left',
+    id: 'feat-body',
+    img: '/design/body.jpg',
+    imageSide: 'right',
+    index: '02',
     label: 'Cold-Pressed Steel',
-    text: 'Single-piece stamped door skins eliminate panel gaps. Flush-mount handles deploy in 0.3 seconds.',
-    top: '48%',
+    title: 'One piece. Zero gaps.',
+    text: 'Single-piece stamped door skins erase panel seams. Flush handles deploy in 0.3 seconds as you approach.',
+  },
+  {
+    id: 'feat-wheels',
+    img: '/design/wheels.jpg',
+    imageSide: 'left',
+    index: '03',
+    label: '22" Aero-Turbine',
+    title: 'Wheels that cut the air',
+    text: 'Forged aluminum with active aerodynamic channels trim drag by 12% at highway speed.',
   },
 ]
 
@@ -31,21 +40,33 @@ export default function DesignSection() {
         <span className="label">02 — Exterior Design</span>
       </div>
 
-      {/* Callout overlays */}
-      {CALLOUTS.map((c) => (
-        <div
-          key={c.id}
-          className={`callout callout--${c.side}`}
-          id={c.id}
-          style={{ top: c.top }}
-        >
-          <div className="callout__line"></div>
-          <div className="callout__content">
-            <p className="callout__label label">{c.label}</p>
-            <p className="callout__text">{c.text}</p>
+      <div className="design-features">
+        {FEATURES.map((f) => (
+          <div
+            key={f.id}
+            id={f.id}
+            className={`feature-row feature-row--img-${f.imageSide}`}
+          >
+            <div className="feature-row__media">
+              <img
+                src={f.img}
+                alt={f.title}
+                className="feature-row__img"
+                loading="lazy"
+                onError={(e) => { e.currentTarget.style.opacity = 0 }}
+              />
+              <span className="feature-row__placeholder">{f.label}</span>
+            </div>
+
+            <div className="feature-row__info">
+              <span className="feature-row__index">{f.index}</span>
+              <p className="feature-row__label label">{f.label}</p>
+              <h3 className="feature-row__title">{f.title}</h3>
+              <p className="feature-row__text">{f.text}</p>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </section>
   )
 }

@@ -35,6 +35,13 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Base section padding (snapping removed) */
+.page-content > section,
+.page-content > footer,
+.feature-row {
+  /* scroll-snap-align: start; (Removed due to trackpad issues) */
+}
+
 body {
   background: var(--bg);
   color: var(--text);
