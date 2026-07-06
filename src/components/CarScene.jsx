@@ -99,7 +99,7 @@ function fixMaterials(object, bodyColor, wheelParentsRef) {
 function CarModel({ carData, bodyColor }) {
   const groupRef = useRef()
   const wheelsRef = useRef([])
-  const { scene } = useGLTF('/3D-model.glb')
+  const { scene } = useGLTF('/3D-model2.glb')
   
   const clonedScene = useMemo(() => {
     const clone = scene.clone(true)
@@ -242,4 +242,4 @@ export default function CarScene({ carData, bodyColor }) {
   )
 }
 
-useGLTF.preload('/3D-model.glb')
+useGLTF.preload('/3D-model2.glb')

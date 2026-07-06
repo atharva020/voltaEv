@@ -104,9 +104,8 @@ export default function App() {
     const ZOOM_SCALE = 5.5     // modest zoom — enough to fill glass, NOT clip through model
     const ZOOM_Y = -3.2        // pull car DOWN so windshield fills screen center
     const ZOOM_Z = 1           // slight nudge toward camera
-    const BLACK_HOLD = 95      // how long black stays solid over the product-info
-                               // sections. Raise if car reappears before config ends;
-                               // lower if black lingers into the footer.
+    const BLACK_HOLD = 200     // holds black through ALL 4 content sections
+                               // (Design + Stats + Technology + Config)
     const masterTL = gsap.timeline({
       scrollTrigger: {
         trigger: '#page-content',
@@ -156,31 +155,31 @@ export default function App() {
       ease: 'none',
     }, '-=7')
 
-    // ── PHASE B · DESIGN → STATS → TECH → CONFIG — hold solid black ──
-    // Only the product-info side texts scroll. Car is parked & fully hidden.
+    // ── PHASE B · DESIGN → STATS → TECHNOLOGY → CONFIG — hold solid black ──
+    // ALL content sections stay hidden. Car is fully behind the black screen.
     .to(carData.current, {
       scale: ZOOM_SCALE, // no-op hold to keep car offscreen behind the black
       duration: BLACK_HOLD,
     })
 
-    // ── PHASE C · FOOTER — car zooms back out from the front ──
-    // Fade the black away WHILE shrinking the car from big → hero size, so we
-    // literally watch it zoom out, still front-facing.
+    // ── PHASE C · AFTER CONFIG / ENTERING FOOTER — reverse zoom-out ──
+    // Exact mirror of Phase A: black fades, then car zooms OUT from full-screen
+    // to normal hero size, exactly the reverse of the zoom-in at the top.
+    .to('#black-overlay', {
+      opacity: 0,
+      duration: 6,
+      ease: 'power1.in',
+    })
     .to(carData.current, {
       scale: 1,
       positionY: 0,
       positionZ: 0,
       rotationY: FRONT,
-      duration: 14,
+      duration: 15,
       ease: 'power2.out',
-    })
-    .to('#black-overlay', {
-      opacity: 0,
-      duration: 9,
-      ease: 'none',
-    }, '<') // reveal happens together with the zoom-out
+    }, '-=3') // overlap with the black fade so it starts just before black fully clears
 
-    // ── PHASE D · once fully zoomed out — spin RIGHT & drive off screen ──
+    // ── PHASE D · FOOTER — spin RIGHT & drive off screen ──
     .to(carData.current, {
       rotationY: FRONT + Math.PI * 0.5, // turn rightward
       duration: 6,
