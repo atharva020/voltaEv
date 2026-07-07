@@ -25,3 +25,18 @@
   height: 100% !important;
   display: block;
 }
+
+@media (max-width: 768px) {
+  .config-car-preview {
+    min-height: 220px;
+    height: 100%;
+  }
+
+  .config-car-preview::before {
+    background: radial-gradient(ellipse at center, transparent 65%, rgba(0, 0, 0, 0.12) 100%);
+  }
+
+  .config-car-preview canvas {
+    touch-action: none;
+  }
+}

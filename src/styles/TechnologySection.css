@@ -68,12 +68,36 @@
 }
 
 @media (max-width: 768px) {
+  .technology-section {
+    min-height: auto;
+    padding: 64px 0;
+  }
+
+  .technology-section__bg-text {
+    font-size: 22vw;
+  }
+
   .technology-section__content {
     margin-left: 0;
-    padding: 0 24px;
+    padding: 0 max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left));
+    max-width: 100%;
   }
+
+  .technology-section h2 {
+    font-size: clamp(32px, 9vw, 48px);
+  }
+
+  .technology-section .body-text {
+    font-size: 15px;
+    margin-bottom: 32px;
+  }
+
   .tech-features {
     flex-direction: column;
     gap: 24px;
+  }
+
+  .tech-features strong {
+    font-size: clamp(32px, 10vw, 40px);
   }
 }

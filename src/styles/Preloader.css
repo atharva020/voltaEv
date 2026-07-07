@@ -60,3 +60,14 @@
   color: rgba(242, 240, 236, 0.4);
   font-size: 11px;
 }
+
+@media (max-width: 768px) {
+  .preloader__inner {
+    width: min(280px, calc(100vw - 48px));
+    padding: 0 8px;
+  }
+
+  .preloader__wordmark {
+    font-size: clamp(40px, 12vw, 56px);
+  }
+}

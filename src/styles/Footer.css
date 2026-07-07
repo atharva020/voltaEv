@@ -54,17 +54,30 @@
 
 @media (max-width: 768px) {
   .footer {
-    padding: 40px 24px;
+    padding: 40px max(20px, env(safe-area-inset-right)) max(32px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
   }
+
+  .footer__brand {
+    font-size: 24px;
+  }
+
   .footer__top {
     flex-direction: column;
     align-items: flex-start;
     gap: 24px;
   }
+
   .footer__nav {
     flex-wrap: wrap;
     gap: 16px;
   }
+
+  .footer__nav a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
   .footer__bottom {
     flex-direction: column;
     align-items: flex-start;

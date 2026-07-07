@@ -25,6 +25,12 @@ export default function App() {
   const [loaded, setLoaded] = useState(false)
   const [bodyColor, setBodyColor] = useState('#1A1A1A')
   const [navVisible, setNavVisible] = useState(false)
+  const [mobile, setMobile] = useState(() =>
+    typeof window !== 'undefined' && window.innerWidth < 768
+  )
+  const [heroInView, setHeroInView] = useState(true)
+  const [configInView, setConfigInView] = useState(false)
+  const [driveOffInView, setDriveOffInView] = useState(false)
   const animationsReady = useRef(false)
   const modelReadyRef = useRef(false)
 
@@ -55,23 +61,72 @@ export default function App() {
       setNavVisible(true)
       if (!animationsReady.current) {
         animationsReady.current = true
-        initAnimations()
+        if (isMobile()) {
+          initMobileAnimations()
+        } else {
+          initAnimations()
+        }
       }
     }, 300)
   }, [])
 
-  // ── Mobile: auto-rotate ──
+  // ── Track mobile breakpoint + pause hero 3D when scrolled away ──
+  useEffect(() => {
+    const onResize = () => setMobile(window.innerWidth < 768)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  useEffect(() => {
+    if (!loaded || !mobile) return
+    const hero = document.getElementById('section-hero')
+    const config = document.getElementById('section-config')
+    const driveoff = document.getElementById('section-driveoff')
+    if (!hero) return
+
+    const heroObs = new IntersectionObserver(
+      ([entry]) => setHeroInView(entry.isIntersecting),
+      { threshold: 0.15 }
+    )
+    heroObs.observe(hero)
+
+    let configObs
+    let driveObs
+    if (config) {
+      configObs = new IntersectionObserver(
+        ([entry]) => setConfigInView(entry.isIntersecting),
+        { threshold: 0.05, rootMargin: '80px 0px' }
+      )
+      configObs.observe(config)
+    }
+    if (driveoff) {
+      driveObs = new IntersectionObserver(
+        ([entry]) => setDriveOffInView(entry.isIntersecting),
+        { threshold: 0.2 }
+      )
+      driveObs.observe(driveoff)
+    }
+
+    return () => {
+      heroObs.disconnect()
+      configObs?.disconnect()
+      driveObs?.disconnect()
+    }
+  }, [loaded, mobile])
+
+  // ── Mobile: auto-rotate (only while hero is visible) ──
   useEffect(() => {
     if (!loaded) return
     if (isMobile()) {
       let angle = 0
       autoRotRef.current = setInterval(() => {
+        if (!heroInView) return
         angle += 0.005
         carData.current.rotationY = angle
       }, 16)
     }
     return () => clearInterval(autoRotRef.current)
-  }, [loaded])
+  }, [loaded, heroInView])
 
   // ── Desktop: idle spin at rest until the user scrolls ──
   useEffect(() => {
@@ -85,7 +140,141 @@ export default function App() {
     return () => clearInterval(idleSpinRef.current)
   }, [loaded])
 
-  // ── Master GSAP ScrollTrigger Timeline ──
+  // ── Mobile car timeline — section-based so zoom aligns with layout ──
+  function initMobileCarTimeline() {
+    const FRONT = 0
+    const ZOOM_SCALE = 5.5
+    const ZOOM_Y = -3.2
+    const ZOOM_Z = 1
+
+    const onFirstScroll = (self) => {
+      if (!scrolledRef.current && self.progress > 0.0005) {
+        scrolledRef.current = true
+        clearInterval(autoRotRef.current)
+        const rot = carData.current.rotationY
+        const nearestFront = Math.round(rot / (Math.PI * 2)) * (Math.PI * 2)
+        gsap.to(carData.current, {
+          rotationY: nearestFront,
+          duration: 0.6,
+          ease: 'power2.out',
+          overwrite: 'auto',
+          onComplete: () => { carData.current.rotationY = FRONT },
+        })
+      }
+    }
+
+    // Phase A: zoom completes as hero leaves — when design section reaches top
+    gsap.timeline({
+      scrollTrigger: {
+        trigger: '#section-hero',
+        start: 'top top',
+        end: 'bottom top',
+        scrub: 0.4,
+        onUpdate: onFirstScroll,
+      },
+    })
+      .to(carData.current, {
+        scale: ZOOM_SCALE,
+        positionY: ZOOM_Y,
+        positionZ: ZOOM_Z,
+        ease: 'power2.in',
+      })
+      .to('#black-overlay', { opacity: 1, ease: 'none' }, '-=0.35')
+
+    // Phase B: hold black through content sections until drive-off
+    ScrollTrigger.create({
+      trigger: '#section-design',
+      start: 'top top',
+      endTrigger: '#section-driveoff',
+      end: 'top 70%',
+      onEnter: () => gsap.set('#black-overlay', { opacity: 1 }),
+      onEnterBack: () => gsap.set('#black-overlay', { opacity: 1 }),
+      onLeaveBack: () => gsap.set('#black-overlay', { opacity: 0 }),
+    })
+
+    // Phase C: zoom out as drive-off enters
+    gsap.timeline({
+      scrollTrigger: {
+        trigger: '#section-driveoff',
+        start: 'top 90%',
+        end: 'center center',
+        scrub: 0.5,
+      },
+    })
+      .to('#black-overlay', { opacity: 0, ease: 'power1.in' })
+      .to(carData.current, {
+        scale: 1,
+        positionY: 0,
+        positionZ: 0,
+        rotationY: FRONT,
+        ease: 'power2.out',
+      }, '-=0.4')
+
+    // Phase D: drive away through footer
+    gsap.timeline({
+      scrollTrigger: {
+        trigger: '#section-driveoff',
+        start: 'center center',
+        end: 'bottom top',
+        scrub: 0.5,
+      },
+    })
+      .to(carData.current, {
+        rotationY: FRONT + Math.PI * 0.5,
+        ease: 'power1.inOut',
+      })
+      .to(carData.current, {
+        positionX: 22,
+        positionZ: -2,
+        wheelRot: Math.PI * 30,
+        ease: 'power2.in',
+      }, '-=0.3')
+  }
+
+  function initMobileAnimations() {
+    initMobileCarTimeline()
+
+    // Stats: count up when scrolled into view
+    document.querySelectorAll('.stat-item').forEach((el) => {
+      const numEl = el.querySelector('.stat-item__num')
+      if (!numEl) return
+      const target = parseFloat(numEl.dataset.target)
+      const isDecimal = target < 10
+
+      ScrollTrigger.create({
+        trigger: el,
+        start: 'top 90%',
+        once: true,
+        onEnter: () => {
+          gsap.fromTo({ val: 0 }, {
+            val: target,
+            duration: 1.4,
+            ease: 'power2.out',
+            onUpdate: function () {
+              numEl.textContent = isDecimal
+                ? this.targets()[0].val.toFixed(1)
+                : String(Math.round(this.targets()[0].val))
+            },
+          })
+        },
+      })
+    })
+
+    // Design rows: simple fade-in
+    document.querySelectorAll('.feature-row').forEach((row) => {
+      const media = row.querySelector('.feature-row__media')
+      const info = row.querySelector('.feature-row__info')
+      const st = { trigger: row, start: 'top 88%', toggleActions: 'play none none none' }
+
+      if (media) {
+        gsap.fromTo(media, { opacity: 0, y: 24 }, { scrollTrigger: st, opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' })
+      }
+      if (info) {
+        gsap.fromTo(info, { opacity: 0, y: 24 }, { scrollTrigger: st, opacity: 1, y: 0, duration: 0.7, ease: 'power2.out', delay: 0.08 })
+      }
+    })
+  }
+
   function initAnimations() {
     if (isMobile()) return
 
@@ -422,6 +611,9 @@ export default function App() {
     })
   }
 
+  // Hero car: on mobile pause while config preview is active, resume for drive-off
+  const heroCarActive = !mobile || driveOffInView || !configInView
+
   return (
     <>
       <Preloader progress={loadProgress} done={loaded} />
@@ -432,6 +624,7 @@ export default function App() {
         bodyColor={bodyColor}
         onLoadProgress={handleLoadProgress}
         onModelReady={handleModelReady}
+        active={heroCarActive}
       />
 
       {/* Black screen overlay for zoom transition */}
@@ -451,7 +644,7 @@ export default function App() {
       {loaded && (
         <>
           <Navbar visible={navVisible} />
-          <RotationIndicator angleRef={carData} />
+          {!mobile && <RotationIndicator angleRef={carData} />}
         </>
       )}
 
@@ -461,7 +654,12 @@ export default function App() {
         <DesignSection />
         <StatsSection />
         <TechnologySection />
-        <ConfigSection bodyColor={bodyColor} onColorChange={setBodyColor} />
+        <ConfigSection
+          bodyColor={bodyColor}
+          onColorChange={setBodyColor}
+          isMobileView={mobile}
+          previewActive={!mobile || (configInView && !driveOffInView)}
+        />
 
         {/* Drive-off transition section */}
         <section className="driveoff-section" id="section-driveoff">

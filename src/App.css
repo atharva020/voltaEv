@@ -13,11 +13,13 @@
 /* ── Drive-off transition section ── */
 .driveoff-section {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
   background: transparent;
   pointer-events: none;
+  padding: 40px 20px;
 }
 
 .driveoff-tagline {
@@ -25,4 +27,11 @@
   font-size: clamp(2.5rem, 6vw, 5rem);
   color: var(--text);
   letter-spacing: 0.04em;
+}
+
+@media (max-width: 768px) {
+  .driveoff-tagline {
+    font-size: clamp(1.75rem, 8vw, 2.5rem);
+    padding: 0 max(20px, env(safe-area-inset-left));
+  }
 }

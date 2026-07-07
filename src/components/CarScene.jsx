@@ -38,6 +38,22 @@ const RIM_NAMES = [
   'rim_235.003',
 ]
 
+const SPINNING_PART_NAMES = new Set([...WHEEL_HUB_NAMES, ...RIM_NAMES])
+
+export function resetSpinningParts(object) {
+  if (!object) return
+  object.traverse((child) => {
+    const name = child.name || ''
+    if (
+      SPINNING_PART_NAMES.has(name) ||
+      name.startsWith('tire_v001') ||
+      name.startsWith('brakes_Coll')
+    ) {
+      child.rotation.set(0, 0, 0)
+    }
+  })
+}
+
 const WHEEL_ASSEMBLY_NAMES = new Set(WHEEL_HUB_NAMES)
 
 export function collectRims(object, rimsRef) {
@@ -222,13 +238,14 @@ function ShadowGround() {
   )
 }
 
-export default function CarScene({ carData, bodyColor, onLoadProgress, onModelReady }) {
+export default function CarScene({ carData, bodyColor, onLoadProgress, onModelReady, active = true }) {
   const mobile = isMobileDevice()
 
   return (
     <Canvas
       id="car-canvas"
-      camera={{ position: [0, 2, 10], fov: 42, near: 0.01, far: 2000 }}
+      frameloop={active ? 'always' : 'never'}
+      camera={{ position: mobile ? [0, 1.4, 13.5] : [0, 2, 10], fov: mobile ? 40 : 42, near: 0.01, far: 2000 }}
       gl={{
         antialias: !mobile,
         alpha: true,
@@ -245,9 +262,12 @@ export default function CarScene({ carData, bodyColor, onLoadProgress, onModelRe
         left: 0,
         width: '100%',
         height: '100vh',
+        height: '100dvh',
         pointerEvents: 'none',
         zIndex: 1,
         background: 'transparent',
+        opacity: active ? 1 : 0,
+        transition: 'opacity 0.35s ease',
       }}
     >
       <LoadReporter onLoadProgress={onLoadProgress} onModelReady={onModelReady} />

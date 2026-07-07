@@ -10,13 +10,15 @@ const COLORS = [
   { id: 'color-terra',      label: 'Terra Bronze',     hex: '#7A4E2D',   material: '#8A5832' },
 ]
 
-export default function ConfigSection({ bodyColor, onColorChange }) {
+export default function ConfigSection({ bodyColor, onColorChange, isMobileView = false, previewActive = true }) {
   const [activeColor, setActiveColor] = useState('color-midnight')
   const [showPreview, setShowPreview] = useState(false)
   const previewRef = useRef(null)
   const activeLabel = COLORS.find((c) => c.id === activeColor)?.label
 
   useEffect(() => {
+    if (isMobileView) return
+
     const el = previewRef.current
     if (!el) return
 
@@ -32,7 +34,9 @@ export default function ConfigSection({ bodyColor, onColorChange }) {
 
     observer.observe(el)
     return () => observer.disconnect()
-  }, [])
+  }, [isMobileView])
+
+  const shouldMountPreview = isMobileView ? previewActive : showPreview
 
   const handleColorSelect = (c) => {
     setActiveColor(c.id)
@@ -86,8 +90,8 @@ export default function ConfigSection({ bodyColor, onColorChange }) {
 
         <div className="config-section__stage" id="config-stage">
           <div className="config-section__preview-wrap" id="config-preview" ref={previewRef}>
-            {showPreview ? (
-              <ConfigCarPreview bodyColor={bodyColor} />
+            {shouldMountPreview ? (
+              <ConfigCarPreview bodyColor={bodyColor} active={previewActive} />
             ) : (
               <div className="config-section__preview-placeholder" aria-hidden="true" />
             )}
