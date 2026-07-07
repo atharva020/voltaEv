@@ -19,27 +19,6 @@ function isolateScene(scene) {
   return clone
 }
 
-function tunePreviewMaterials(object) {
-  object.traverse((child) => {
-    if (!child.isMesh || !child.material) return
-    const name = (child.name || '').toLowerCase()
-    const mats = Array.isArray(child.material) ? child.material : [child.material]
-
-    mats.forEach((mat) => {
-      if (name.includes('rim') || name.includes('chrome')) {
-        mat.metalness = 0.55
-        mat.roughness = 0.38
-        mat.envMapIntensity = 0.45
-      } else if (name.includes('body_color') || name.includes('paint')) {
-        mat.metalness = 0.45
-        mat.roughness = 0.38
-        mat.envMapIntensity = 0.75
-      }
-      mat.needsUpdate = true
-    })
-  })
-}
-
 function MiniCarModel({ bodyColor, mobile }) {
   const groupRef = useRef()
   const modelRef = useRef(null)
@@ -56,8 +35,8 @@ function MiniCarModel({ bodyColor, mobile }) {
       clone.scale.setScalar(scaleTarget)
     }
 
+    // Same material pipeline as the hero car — no separate overrides
     fixMaterials(clone, bodyColor)
-    tunePreviewMaterials(clone)
     resetSpinningParts(clone)
     modelRef.current = clone
     return clone
@@ -99,21 +78,25 @@ export default function ConfigCarPreview({ bodyColor, active = true }) {
           alpha: true,
           powerPreference: 'high-performance',
           toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: mobile ? 1.5 : 1.45,
+          toneMappingExposure: 1.2,
           outputColorSpace: THREE.SRGBColorSpace,
         }}
         dpr={mobile ? 1 : [1, 1.25]}
         frameloop={active ? 'always' : 'never'}
       >
-        <directionalLight position={[6, 10, 5]} intensity={mobile ? 2.4 : 3} />
-        <directionalLight position={[-8, 5, -4]} intensity={1.2} color="#c8d8ff" />
-        <directionalLight position={[0, 3, -8]} intensity={0.9} color="#D4A853" />
-        <ambientLight intensity={mobile ? 0.7 : 0.55} />
-        <hemisphereLight args={['#b8c0d8', '#1a1a1a', 0.65]} />
+        {/* Match hero CarScene lighting exactly */}
+        <directionalLight position={[8, 12, 6]} intensity={2.5} />
+        <directionalLight position={[-10, 5, -5]} intensity={0.9} color="#c8d8ff" />
+        <directionalLight position={[0, 3, -10]} intensity={0.6} color="#D4A853" />
+        <ambientLight intensity={0.25} />
 
         <Suspense fallback={null}>
           <MiniCarModel bodyColor={bodyColor} mobile={mobile} />
-          <Environment preset="studio" background={false} environmentIntensity={mobile ? 1.1 : 1.4} />
+          <Environment
+            preset="studio"
+            background={false}
+            environmentIntensity={mobile ? 0.8 : 1.2}
+          />
         </Suspense>
       </Canvas>
     </div>
