@@ -2,7 +2,7 @@ import { Suspense, useRef, useEffect, useMemo } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useGLTF, Environment, Center } from '@react-three/drei'
 import * as THREE from 'three'
-import { fixMaterials, applyBodyColor, spinRims } from './CarScene'
+import { fixMaterials, applyBodyColor } from './CarScene'
 import '../styles/ConfigCarPreview.css'
 
 const MODEL_PATH = '/3D-model2.glb'
@@ -22,15 +22,10 @@ function brightenMaterials(object) {
 
 function MiniCarModel({ bodyColor }) {
   const groupRef = useRef()
-  const wheelsRef = useRef([])
-  const rimsRef = useRef([])
   const { scene } = useGLTF(MODEL_PATH)
 
   const clonedScene = useMemo(() => {
     const clone = scene.clone(true)
-    wheelsRef.current = []
-    rimsRef.current = []
-
     const box = new THREE.Box3().setFromObject(clone)
     const size = box.getSize(new THREE.Vector3())
     const maxDim = Math.max(size.x, size.y, size.z)
@@ -39,7 +34,7 @@ function MiniCarModel({ bodyColor }) {
       clone.scale.setScalar(3.2 / maxDim)
     }
 
-    fixMaterials(clone, bodyColor, wheelsRef, rimsRef)
+    fixMaterials(clone, bodyColor)
     brightenMaterials(clone)
     return clone
   }, [scene])
@@ -53,12 +48,6 @@ function MiniCarModel({ bodyColor }) {
     if (groupRef.current) {
       groupRef.current.rotation.y += delta * 0.35
     }
-
-    const spin = delta * 3.2
-    wheelsRef.current.forEach((wheel) => {
-      wheel.rotation.x += spin
-    })
-    spinRims(rimsRef.current, spin, groupRef.current?.quaternion)
   })
 
   return (
