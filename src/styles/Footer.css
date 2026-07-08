@@ -52,6 +52,22 @@
   color: var(--text-muted);
 }
 
+.footer__credit {
+  margin-top: 20px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.footer__credit a {
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer__credit a:hover {
+  color: var(--accent);
+}
+
 @media (max-width: 768px) {
   .footer {
     padding: 40px max(20px, env(safe-area-inset-right)) max(32px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));

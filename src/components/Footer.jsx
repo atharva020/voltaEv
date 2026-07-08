@@ -17,6 +17,12 @@ export default function Footer() {
         <p className="label">© 2026 Volta Electric Vehicle Co. All rights reserved.</p>
         <p className="label">0 to 100 in 2.1 seconds. 643 km. Zero regrets.</p>
       </div>
+      <p className="footer__credit label">
+        Built by{' '}
+        <a href="https://atharvachirde.com" target="_blank" rel="noopener noreferrer">
+          Atharva Chirde
+        </a>
+      </p>
     </footer>
   )
 }
